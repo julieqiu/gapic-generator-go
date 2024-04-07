@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Package snippets provides functionality for capturing snippet data from a
+// protocol buffer file and writing that data to a snippet_metadata.*.json
+// file.
 package snippets
 
 //go:generate protoc --go_out=. --go_opt=paths=source_relative metadata/metadata.proto
