@@ -17,6 +17,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -35,11 +36,11 @@ func main() {
 func run() error {
 	reqBytes, err := io.ReadAll(os.Stdin)
 	if err != nil {
-		return err
+		return fmt.Errorf("io.ReadAll: %v", err)
 	}
 	var genReq plugin.CodeGeneratorRequest
 	if err := proto.Unmarshal(reqBytes, &genReq); err != nil {
-		return err
+		return fmt.Errorf("proto.Unmarshal: %v", err)
 	}
 
 	genResp, err := gengapic.Gen(&genReq)
@@ -51,10 +52,10 @@ func run() error {
 
 	outBytes, err := proto.Marshal(genResp)
 	if err != nil {
-		return err
+		return fmt.Errorf("proto.Marshal: %v", err)
 	}
 	if _, err := os.Stdout.Write(outBytes); err != nil {
-		return err
+		return fmt.Errorf("os.Stdout.Write: %v", err)
 	}
 	return nil
 }
