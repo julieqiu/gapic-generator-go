@@ -30,6 +30,8 @@ func (g *generator) genExampleFile(serv *descriptorpb.ServiceDescriptorProto) er
 	pkgName := g.opts.pkgName
 	servName := pbinfo.ReduceServName(serv.GetName(), pkgName)
 
+	g.exampleInitClientTemplate = newTemplate("exampleInitClient", exampleInitClient)
+	g.exampleClientFactoryTemplate = newTemplate("exampleClientFactory", exampleClientFactory)
 	if err := g.exampleClientFactory(pkgName, servName); err != nil {
 		return err
 	}
@@ -44,20 +46,21 @@ func (g *generator) genExampleFile(serv *descriptorpb.ServiceDescriptorProto) er
 	return nil
 }
 
+type tmpl struct {
+	ServiceName string
+	PackageName string
+}
+
 func (g *generator) exampleClientFactory(pkgName, servName string) error {
 	p := g.printf
-	g.exampleClientFactoryTemplate = newTemplate("exampleClientFactory", exampleClientFactory)
 
 	for _, t := range g.opts.transports {
 		if t == rest {
 			servName += "REST"
 		}
-		out, err := execute(g.exampleClientFactoryTemplate, struct {
-			ServiceName string
-			PkgName     string
-		}{
+		out, err := execute(g.exampleClientFactoryTemplate, tmpl{
 			ServiceName: servName,
-			PkgName:     pkgName,
+			PackageName: pkgName,
 		})
 		if err != nil {
 			return err
@@ -70,15 +73,14 @@ func (g *generator) exampleClientFactory(pkgName, servName string) error {
 	return nil
 }
 
-const exampleClientFactory = `
-func ExampleNew{{.ServiceName}}Client() {
+const exampleClientFactory = `func ExampleNew{{.ServiceName}}Client() {
 	ctx := context.Background()
 	// This snippet has been automatically generated and should be regarded as a code template only.
 	// It will require modifications to work:
 	// - It may require correct/in-range values for request initialization.
 	// - It may require specifying regional endpoints when creating the service client as shown in:
 	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
-	c, err := {{.PkgName}}.New{{.ServiceName}}Client(ctx)
+	c, err := {{.PackageName}}.New{{.ServiceName}}Client(ctx)
 	if err != nil {
 		// TODO: Handle error.
 	}
@@ -88,35 +90,34 @@ func ExampleNew{{.ServiceName}}Client() {
 	_ = c
 }`
 
-func newTemplate(name, body string) *template.Template {
-	return template.Must(template.New(name).Parse(body))
-}
-
-func execute(tmpl *template.Template, data any) (string, error) {
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return "", err
-	}
-	return buf.String(), nil
-}
-
-func (g *generator) exampleInitClient(pkgName, servName string) {
+func (g *generator) exampleInitClient(pkgName, servName string) error {
 	p := g.printf
+	out, err := execute(g.exampleInitClientTemplate, tmpl{
+		ServiceName: servName,
+		PackageName: pkgName,
+	})
+	if err != nil {
+		return err
+	}
 
-	p("ctx := context.Background()")
-	p("// This snippet has been automatically generated and should be regarded as a code template only.")
-	p("// It will require modifications to work:")
-	p("// - It may require correct/in-range values for request initialization.")
-	p("// - It may require specifying regional endpoints when creating the service client as shown in:")
-	p("//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options")
-	p("c, err := %s.New%sClient(ctx)", pkgName, servName)
-	p("if err != nil {")
-	p("  // TODO: Handle error.")
-	p("}")
-	p("defer c.Close()")
-
+	p(out)
 	g.imports[pbinfo.ImportSpec{Path: "context"}] = true
+	return nil
 }
+
+const exampleInitClient = `
+	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
+	c, err := {{.PackageName}}.New{{.ServiceName}}Client(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer c.Close()
+`
 
 func (g *generator) exampleMethod(pkgName, servName string, m *descriptorpb.MethodDescriptorProto) error {
 	if m.GetClientStreaming() != m.GetServerStreaming() {
@@ -323,4 +324,20 @@ func (g *generator) exampleBidiCall(m *descriptorpb.MethodDescriptorProto, inTyp
 	p("}")
 
 	g.imports[pbinfo.ImportSpec{Path: "io"}] = true
+}
+
+func newTemplate(name string, body ...string) *template.Template {
+	t := template.Must(template.New(name).Parse(""))
+	for _, b := range body {
+		t.Parse(b)
+	}
+	return t
+}
+
+func execute(tmpl *template.Template, data any) (string, error) {
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }

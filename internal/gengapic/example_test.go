@@ -270,7 +270,9 @@ func TestExample(t *testing.T) {
 				g.mixins = nil
 			}
 			g.aux.customOp = tst.op
-			g.genExampleFile(serv)
+			if err := g.genExampleFile(serv); err != nil {
+				t.Fatal(err)
+			}
 			if diff := cmp.Diff(g.imports, tst.imports); diff != "" {
 				t.Errorf("TestExample(%s): imports got(-),want(+):\n%s", tst.tstName, diff)
 			}

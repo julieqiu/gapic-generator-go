@@ -42,6 +42,7 @@ import (
 type generator struct {
 	pt printer.P
 
+	exampleInitClientTemplate    *template.Template
 	exampleClientFactoryTemplate *template.Template
 
 	// descInfo contains the protobuf descriptor properties.
