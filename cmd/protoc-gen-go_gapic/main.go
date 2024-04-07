@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Command protoc-gen-go_gapic provides a Generated API Client (GAPIC)
+// generator that generates a Go client library from protocol buffers.
 package main
 
 import (
