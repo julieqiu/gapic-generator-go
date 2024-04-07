@@ -53,37 +53,54 @@ var optsParam = &param{
 // SnippetMetadata is a model for capturing snippet details and writing them to
 // a snippet_metadata.*.json file.
 type SnippetMetadata struct {
-	// protoPkg is the proto namespace for the API package.
+	// protoPkg is the proto namespace for the API package (e.g.
+	// "[google.cloud.bigquery.migration.v2]").
+	//
+	// [google.cloud.bigquery.migration.v2]: https://github.com/googleapis/googleapis/blob/e0677a395947c2f3f3411d7202a6868a7b069a41/google/cloud/bigquery/migration/v2/migration_service.proto#L17
 	protoPkg string
-	// libPkg is the Go import path for the GAPIC client.
+
+	// libPkg is the Go import path for the GAPIC client, dervied from the
+	// go_package statement (e.g.
+	// "[cloud.google.com/go/bigquery/migration/apiv2/migrationpb]")
+	//
+	// [cloud.google.com/go/bigquery/migration/apiv2/migrationpb]: https://github.com/googleapis/googleapis/blob/e0677a395947c2f3f3411d7202a6868a7b069a41/google/cloud/bigquery/migration/v2/migration_service.proto#L28
 	libPkg string
+
 	// protoServices is a map of gapic service short names to service structs.
 	protoServices map[string]*service
+
 	// apiVersion is the gapic service version. (e.g. "v1", "v1beta1")
 	apiVersion string
-	// pkgName is the short package name after the semi-colon in go-gapic-package.
+
+	// pkgName is the short package name after the semi-colon in
+	// go-gapic-package (e.g. "[migrationpb]")
+	//
+	// [migrationpb]: https://github.com/googleapis/googleapis/blob/e0677a395947c2f3f3411d7202a6868a7b069a41/google/cloud/bigquery/migration/v2/migration_service.proto#L28
 	pkgName string
 }
 
-// NewMetadata initializes the model that will collect snippet metadata, from:
-// protoPkg - dot-separated, without final type name element (e.g. "google.cloud.bigquery.migration.v2")
-// libPkg - the Go import path for the GAPIC client, per libraryPackage in gapic_metadata.json (e.g. "cloud.google.com/go/bigquery/migration/apiv2")
-// pkgName - stored in g.opts.pkgName, used as an argument to pbinfo.ReduceServName
-func NewMetadata(protoPkg, libPkg, pkgName string) *SnippetMetadata {
+// NewMetadata constructs a SnippetMetdata using the protoPkg, libPkg, and
+// pkgName. See SnippetMetadata and TestNewMetadata for details.
+func NewMetadata(protoPkg, importPath, pkgName string) *SnippetMetadata {
 	lastDot := strings.LastIndex(protoPkg, ".")
 	apiVersion := protoPkg[lastDot+1:]
 	return &SnippetMetadata{
 		protoPkg:      protoPkg,
-		libPkg:        libPkg,
+		libPkg:        importPath,
 		apiVersion:    apiVersion,
 		protoServices: make(map[string]*service),
 		pkgName:       pkgName,
 	}
 }
 
-// AddService creates a service entry from:
-// servName - the service short name (e.g. "AutoscalingPolicyService") identifier
-// defaultHost - the DNS hostname for the service, available from annotations.E_DefaultHost. (e.g. "bigquerymigration.googleapis.com")
+// AddService adds the given service name and default host to protoServices.
+// The service name is the short name identified (e.g.
+// "[MigrationService]"). The default host is the DNS hostname for the
+// service, as specified by google.api.default_host (e.g.
+// "[bigquerymigration.googleapis.com]")
+//
+// [MigrationService]: https://github.com/googleapis/googleapis/blob/e0677a395947c2f3f3411d7202a6868a7b069a41/google/cloud/bigquery/migration/v2/migration_service.proto#L35
+// [bigquerymigration.googleapis.com]: https://github.com/googleapis/googleapis/blob/e0677a395947c2f3f3411d7202a6868a7b069a41/google/cloud/bigquery/migration/v2/migration_service.proto#L36
 func (sm *SnippetMetadata) AddService(servName, defaultHost string) {
 	shortName := strings.Split(defaultHost, ".")[0]
 	s := &service{
@@ -254,12 +271,18 @@ func (sm *SnippetMetadata) protoVersion() string {
 
 // service associates a proto service from gapic metadata with gapic client and its methods.
 type service struct {
-	// protoName is the service short name.
+	// protoName is the service short name (e.g. "[MigrationService]").
+	//
+	// [MigrationService]: https://github.com/googleapis/googleapis/blob/e0677a395947c2f3f3411d7202a6868a7b069a41/google/cloud/bigquery/migration/v2/migration_service.proto#L35
 	protoName string
+
 	// methods is a map of gapic method short names to method structs.
 	methods map[string]*method
+
 	// shortName the first element of the default DNS hostname for the service.
-	// (e.g. "bigquerymigration" from "bigquerymigration.googleapis.com")
+	// (e.g. "bigquerymigration" from "[bigquerymigration.googleapis.com]")
+	//
+	// [bigquerymigration.googleapis.com]: https://github.com/googleapis/googleapis/blob/e0677a395947c2f3f3411d7202a6868a7b069a41/google/cloud/bigquery/migration/v2/migration_service.proto#L36
 	shortName string
 }
 

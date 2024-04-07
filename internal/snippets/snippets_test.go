@@ -23,39 +23,38 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-var protoPkg = "google.cloud.bigquery.migration.v2"
-var libPkg = "cloud.google.com/go/bigquery/migration/apiv2"
-var defaultHost = "bigquerymigration.googleapis.com"
-var version = "v2"
-var pkgName = "migration"
+var (
+	testDefaultHost = "bigquerymigration.googleapis.com"
+	testGoImport    = "cloud.google.com/go/bigquery/migration/apiv2/migrationpb"
+	testPkgName     = "migrationpb"
+	testProtoPkg    = "google.cloud.bigquery.migration.v2"
+	testVersion     = "v2"
+)
 
 func TestNewMetadata(t *testing.T) {
-	sm := NewMetadata(protoPkg, libPkg, pkgName)
-
-	if sm.protoPkg != protoPkg {
-		t.Errorf("%s: got %s want %s,", t.Name(), sm.protoPkg, protoPkg)
+	got := NewMetadata(testProtoPkg, testGoImport, testPkgName)
+	want := &SnippetMetadata{
+		protoPkg:      testProtoPkg,
+		libPkg:        testGoImport,
+		apiVersion:    testVersion,
+		protoServices: map[string]*service{},
+		pkgName:       testPkgName,
 	}
-	if sm.libPkg != libPkg {
-		t.Errorf("%s: got %s want %s", t.Name(), sm.libPkg, libPkg)
-	}
-	if got := len(sm.protoServices); got != 0 {
-		t.Errorf("%s: got %d want empty", t.Name(), len(sm.protoServices))
-	}
-	if sm.apiVersion != version {
-		t.Errorf("%s: got %s want %s", t.Name(), sm.apiVersion, version)
+	if diff := cmp.Diff(want, got, cmp.AllowUnexported(SnippetMetadata{})); diff != "" {
+		t.Errorf("mismatch(-want, +got): %s", diff)
 	}
 }
 
 func TestToMetadataJSON(t *testing.T) {
 	// Build fixture
-	sm := NewMetadata(protoPkg, libPkg, pkgName)
+	sm := NewMetadata(testProtoPkg, testGoImport, testPkgName)
 	regionTagStart := 18
 	regionTagEnd := 50
 	for i := 0; i < 2; i++ {
 		serviceName := fmt.Sprintf("Foo%dService", i)
 		methodName := fmt.Sprintf("Bar%dMethod", i)
-		sm.AddService(serviceName, defaultHost)
-		sm.AddMethod(serviceName, methodName, protoPkg, serviceName, regionTagEnd)
+		sm.AddService(serviceName, testDefaultHost)
+		sm.AddMethod(serviceName, methodName, testProtoPkg, serviceName, regionTagEnd)
 		sm.UpdateMethodDoc(serviceName, methodName, methodName+" doc\n New line.")
 		sm.UpdateMethodResult(serviceName, methodName, "mypackage."+methodName+"Result")
 		sm.AddParams(serviceName, methodName, "mypackage."+methodName+"Request")
@@ -64,12 +63,12 @@ func TestToMetadataJSON(t *testing.T) {
 	// Build expectation
 	want := &metadata.Index{
 		ClientLibrary: &metadata.ClientLibrary{
-			Name:     libPkg,
+			Name:     testGoImport,
 			Version:  VersionPlaceholder,
 			Language: metadata.Language_GO,
 			Apis: []*metadata.Api{
 				{
-					Id:      protoPkg,
+					Id:      testProtoPkg,
 					Version: "v2",
 				},
 			},
@@ -144,8 +143,7 @@ func TestToMetadataJSON(t *testing.T) {
 
 func TestRegionTag(t *testing.T) {
 	protoPkg := "google.cloud.bigquery.migration.v2"
-	libPkg := "google.golang.org/genproto/googleapis/cloud/bigquery/migration/v2"
-	sm := NewMetadata(protoPkg, libPkg, pkgName)
+	sm := NewMetadata(protoPkg, testGoImport, testPkgName)
 	serviceName := "MigrationService"
 	defaultHost := "bigquerymigration.googleapis.com"
 	sm.AddService(serviceName, defaultHost)
