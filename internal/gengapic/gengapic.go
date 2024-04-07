@@ -89,6 +89,9 @@ func Gen(genReq *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse
 	// Initialize the model that will collect snippet metadata.
 	g.snippetMetadata = g.newSnippetsMetadata(protoPkg)
 
+	g.exampleInitClientTemplate = newTemplate("exampleInitClient", exampleInitClient)
+	g.exampleClientFactoryTemplate = newTemplate("exampleClientFactory", exampleClientFactory)
+
 	for _, s := range genServs {
 		// TODO(pongad): gapic-generator does not remove the package name here,
 		// so even though the client for LoggingServiceV2 is just "Client"

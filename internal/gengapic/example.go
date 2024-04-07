@@ -30,8 +30,6 @@ func (g *generator) genExampleFile(serv *descriptorpb.ServiceDescriptorProto) er
 	pkgName := g.opts.pkgName
 	servName := pbinfo.ReduceServName(serv.GetName(), pkgName)
 
-	g.exampleInitClientTemplate = newTemplate("exampleInitClient", exampleInitClient)
-	g.exampleClientFactoryTemplate = newTemplate("exampleClientFactory", exampleClientFactory)
 	if err := g.exampleClientFactory(pkgName, servName); err != nil {
 		return err
 	}
