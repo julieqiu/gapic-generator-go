@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"text/template"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -40,6 +41,8 @@ import (
 // pluginpb.CodeGeneratorResponse from a pluginpb.CodeGeneratorRequest.
 type generator struct {
 	pt printer.P
+
+	exampleClientFactoryTemplate *template.Template
 
 	// descInfo contains the protobuf descriptor properties.
 	descInfo pbinfo.Info

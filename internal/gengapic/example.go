@@ -15,8 +15,10 @@
 package gengapic
 
 import (
+	"bytes"
 	"fmt"
 	"strings"
+	"text/template"
 
 	longrunning "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	"github.com/googleapis/gapic-generator-go/internal/pbinfo"
@@ -28,7 +30,9 @@ func (g *generator) genExampleFile(serv *descriptorpb.ServiceDescriptorProto) er
 	pkgName := g.opts.pkgName
 	servName := pbinfo.ReduceServName(serv.GetName(), pkgName)
 
-	g.exampleClientFactory(pkgName, servName)
+	if err := g.exampleClientFactory(pkgName, servName); err != nil {
+		return err
+	}
 
 	methods := append(serv.GetMethod(), g.getMixinMethods()...)
 
@@ -40,24 +44,60 @@ func (g *generator) genExampleFile(serv *descriptorpb.ServiceDescriptorProto) er
 	return nil
 }
 
-func (g *generator) exampleClientFactory(pkgName, servName string) {
+func (g *generator) exampleClientFactory(pkgName, servName string) error {
 	p := g.printf
-	for _, t := range g.opts.transports {
-		s := servName
-		if t == rest {
-			s += "REST"
-		}
+	g.exampleClientFactoryTemplate = newTemplate("exampleClientFactory", exampleClientFactory)
 
-		p("func ExampleNew%sClient() {", s)
-		g.exampleInitClient(pkgName, s)
-		p("")
-		p("  // TODO: Use client.")
-		p("  _ = c")
-		p("}")
+	for _, t := range g.opts.transports {
+		if t == rest {
+			servName += "REST"
+		}
+		out, err := execute(g.exampleClientFactoryTemplate, struct {
+			ServiceName string
+			PkgName     string
+		}{
+			ServiceName: servName,
+			PkgName:     pkgName,
+		})
+		if err != nil {
+			return err
+		}
+		p(out)
 		p("")
 	}
 
 	g.imports[pbinfo.ImportSpec{Path: "context"}] = true
+	return nil
+}
+
+const exampleClientFactory = `
+func ExampleNew{{.ServiceName}}Client() {
+	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
+	c, err := {{.PkgName}}.New{{.ServiceName}}Client(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer c.Close()
+
+	// TODO: Use client.
+	_ = c
+}`
+
+func newTemplate(name, body string) *template.Template {
+	return template.Must(template.New(name).Parse(body))
+}
+
+func execute(tmpl *template.Template, data any) (string, error) {
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, data); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 func (g *generator) exampleInitClient(pkgName, servName string) {
