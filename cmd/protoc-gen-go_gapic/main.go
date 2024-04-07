@@ -27,13 +27,19 @@ import (
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
 	reqBytes, err := io.ReadAll(os.Stdin)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	var genReq plugin.CodeGeneratorRequest
 	if err := proto.Unmarshal(reqBytes, &genReq); err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	genResp, err := gengapic.Gen(&genReq)
@@ -45,9 +51,10 @@ func main() {
 
 	outBytes, err := proto.Marshal(genResp)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	if _, err := os.Stdout.Write(outBytes); err != nil {
-		log.Fatal(err)
+		return err
 	}
+	return nil
 }
