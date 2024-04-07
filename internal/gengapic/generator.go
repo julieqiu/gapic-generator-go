@@ -53,6 +53,7 @@ type generator struct {
 	// and before the package name.
 	headerComments printer.P
 
+	// imports contains the set of Go package import paths and an optional alias.
 	imports map[pbinfo.ImportSpec]bool
 
 	// apiName is a product title for the service, and is the name displayed in
