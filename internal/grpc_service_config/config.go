@@ -18,15 +18,15 @@ import (
 	"io"
 	"log"
 
-	duration "github.com/golang/protobuf/ptypes/duration"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 // Config represents parsed mapping of the gRPC ServiceConfig contents
 // with methods for increased accessibility.
 type Config struct {
 	policies  map[string]*MethodConfig_RetryPolicy
-	timeouts  map[string]*duration.Duration
+	timeouts  map[string]*durationpb.Duration
 	reqLimits map[string]int
 	resLimits map[string]int
 }
@@ -47,7 +47,7 @@ func New(in io.Reader) (Config, error) {
 	}
 
 	policies := map[string]*MethodConfig_RetryPolicy{}
-	timeouts := map[string]*duration.Duration{}
+	timeouts := map[string]*durationpb.Duration{}
 	reqLimits := map[string]int{}
 	resLimits := map[string]int{}
 
@@ -119,7 +119,7 @@ func (c Config) Timeout(s, m string) (int64, bool) {
 }
 
 // ToMillis returns the given Duration as milliseconds.
-func ToMillis(d *duration.Duration) int64 {
+func ToMillis(d *durationpb.Duration) int64 {
 	if err := d.CheckValid(); err != nil {
 		log.Panic("Error converting durationpb to Duration ", err)
 	}
