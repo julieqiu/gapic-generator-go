@@ -44,6 +44,7 @@ type generator struct {
 
 	exampleInitClientTemplate    *template.Template
 	exampleClientFactoryTemplate *template.Template
+	exampleBidiCallTemplate      *template.Template
 
 	// descInfo contains the protobuf descriptor properties.
 	descInfo pbinfo.Info

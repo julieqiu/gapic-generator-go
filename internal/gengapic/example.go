@@ -30,6 +30,12 @@ func (g *generator) genExampleFile(serv *descriptorpb.ServiceDescriptorProto) er
 	pkgName := g.opts.pkgName
 	servName := pbinfo.ReduceServName(serv.GetName(), pkgName)
 
+<<<<<<< HEAD
+=======
+	g.exampleInitClientTemplate = newTemplate("exampleInitClient", exampleInitClient)
+	g.exampleClientFactoryTemplate = newTemplate("exampleClientFactory", exampleClientFactory)
+	g.exampleBidiCallTemplate = newTemplate("exampleBidiCall", exampleBidiCall)
+>>>>>>> 4f0e934 (bidicall)
 	if err := g.exampleClientFactory(pkgName, servName); err != nil {
 		return err
 	}
@@ -289,40 +295,56 @@ func (g *generator) examplePagingCall(m *descriptorpb.MethodDescriptorProto) err
 	return nil
 }
 
-func (g *generator) exampleBidiCall(m *descriptorpb.MethodDescriptorProto, inType pbinfo.ProtoType, inSpec pbinfo.ImportSpec) {
+func (g *generator) exampleBidiCall(m *descriptorpb.MethodDescriptorProto, inType pbinfo.ProtoType, inSpec pbinfo.ImportSpec) error {
 	p := g.printf
 
-	p("stream, err := c.%s(ctx)", m.GetName())
-	p("if err != nil {")
-	p("  // TODO: Handle error.")
-	p("}")
-
-	p("go func() {")
-	p("  reqs := []*%s.%s{", inSpec.Name, inType.GetName())
-	p("    // TODO: Create requests.")
-	p("  }")
-	p("  for _, req := range reqs {")
-	p("    if err := stream.Send(req); err != nil {")
-	p("            // TODO: Handle error.")
-	p("    }")
-	p("  }")
-	p("  stream.CloseSend()")
-	p("}()")
-
-	p("for {")
-	p("  resp, err := stream.Recv()")
-	p("  if err == io.EOF {")
-	p("    break")
-	p("  }")
-	p("  if err != nil {")
-	p("    // TODO: handle error.")
-	p("  }")
-	p("  // TODO: Use resp.")
-	p("  _ = resp")
-	p("}")
-
+	out, err := execute(g.exampleBidiCallTemplate, struct {
+		MethodName string
+		InSpecName string
+		InTypeName string
+	}{
+		MethodName: m.GetName(),
+		InSpecName: inSpec.Name,
+		InTypeName: inType.GetName(),
+	})
+	if err != nil {
+		return err
+	}
+	p(out)
 	g.imports[pbinfo.ImportSpec{Path: "io"}] = true
+	return nil
 }
+
+const exampleBidiCall = `
+stream, err := c.{{.MethodName}}(ctx)
+if err != nil {
+	// TODO: Handle error.
+}
+
+go func() {
+	reqs := []*{{.InSpecName}}.{{.InTypeName}}{
+	// TODO: Create requests.")
+	}
+	for _, req := range reqs {
+	if err := stream.Send(req); err != nil {
+			// TODO: Handle error.
+	}
+	}
+	stream.CloseSend()
+}()
+
+for {
+	resp, err := stream.Recv()
+	if err == io.EOF {
+	break
+	}
+	if err != nil {
+	// TODO: handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+`
 
 func newTemplate(name string, body ...string) *template.Template {
 	t := template.Must(template.New(name).Parse(""))
