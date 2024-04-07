@@ -20,7 +20,6 @@ import (
 	"testing"
 	"time"
 
-	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
 	"github.com/google/go-cmp/cmp"
 	conf "github.com/googleapis/gapic-generator-go/internal/grpc_service_config"
 	"github.com/googleapis/gapic-generator-go/internal/pbinfo"
@@ -38,6 +37,7 @@ import (
 	"google.golang.org/protobuf/types/known/apipb"
 	duration "google.golang.org/protobuf/types/known/durationpb"
 	wrappers "google.golang.org/protobuf/types/known/wrapperspb"
+	"google.golang.org/protobuf/types/pluginpb"
 )
 
 func TestClientHook(t *testing.T) {
@@ -539,7 +539,7 @@ func TestClientInit(t *testing.T) {
 					cop,
 				},
 			})
-			request := plugin.CodeGeneratorRequest{
+			request := pluginpb.CodeGeneratorRequest{
 				Parameter: tst.parameter,
 				ProtoFile: fds,
 			}

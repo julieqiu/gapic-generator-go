@@ -22,12 +22,12 @@ import (
 	"strings"
 	"time"
 
-	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
 	"github.com/googleapis/gapic-generator-go/internal/pbinfo"
 	"github.com/googleapis/gapic-generator-go/internal/printer"
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/pluginpb"
 )
 
 const (
@@ -52,7 +52,7 @@ const (
 var headerParamRegexp = regexp.MustCompile(`{([_.a-z0-9]+)`)
 
 // Gen is the entry point for GAPIC generation via the protoc plugin.
-func Gen(genReq *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, error) {
+func Gen(genReq *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse, error) {
 	var g generator
 	if err := g.init(genReq); err != nil {
 		return &g.resp, err
@@ -136,7 +136,7 @@ func Gen(genReq *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, er
 	serv := genServs[0]
 
 	g.genDocFile(time.Now().Year(), scopes, serv)
-	g.resp.File = append(g.resp.File, &plugin.CodeGeneratorResponse_File{
+	g.resp.File = append(g.resp.File, &pluginpb.CodeGeneratorResponse_File{
 		Name:    proto.String(filepath.Join(g.opts.outDir, "doc.go")),
 		Content: proto.String(g.pt.String()),
 	})
@@ -144,7 +144,7 @@ func Gen(genReq *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, er
 	if g.opts.metadata {
 		g.reset()
 		g.genGapicMetadataFile()
-		g.resp.File = append(g.resp.File, &plugin.CodeGeneratorResponse_File{
+		g.resp.File = append(g.resp.File, &pluginpb.CodeGeneratorResponse_File{
 			Name:    proto.String(filepath.Join(g.opts.outDir, "gapic_metadata.json")),
 			Content: proto.String(g.pt.String()),
 		})
@@ -167,7 +167,7 @@ func Gen(genReq *plugin.CodeGeneratorRequest) (*plugin.CodeGeneratorResponse, er
 }
 
 // Collects the proto services to generate GAPICs for from the CodeGeneratorRequest.
-func (g *generator) collectServices(genReq *plugin.CodeGeneratorRequest) (genServs []*descriptorpb.ServiceDescriptorProto) {
+func (g *generator) collectServices(genReq *pluginpb.CodeGeneratorRequest) (genServs []*descriptorpb.ServiceDescriptorProto) {
 	for _, f := range genReq.GetProtoFile() {
 		if !strContains(genReq.GetFileToGenerate(), f.GetName()) {
 			continue

@@ -17,12 +17,12 @@ package gengapic
 import (
 	"testing"
 
-	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
 	"github.com/google/go-cmp/cmp"
 	"github.com/googleapis/gapic-generator-go/internal/pbinfo"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/pluginpb"
 )
 
 // TODO(dovs): Augment with map iterator
@@ -408,7 +408,7 @@ func TestPagingField(t *testing.T) {
 		},
 	}
 
-	req := plugin.CodeGeneratorRequest{
+	req := pluginpb.CodeGeneratorRequest{
 		Parameter: proto.String("go-gapic-package=path;mypackage,transport=rest"),
 		ProtoFile: []*descriptorpb.FileDescriptorProto{file},
 	}

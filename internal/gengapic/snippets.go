@@ -19,12 +19,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
 	"github.com/googleapis/gapic-generator-go/internal/pbinfo"
 	"github.com/googleapis/gapic-generator-go/internal/snippets"
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/pluginpb"
 )
 
 // newSnippetsMetadata initializes the model that will collect snippet metadata.
@@ -130,7 +130,7 @@ func (g *generator) genAndCommitSnippetMetadata(protoPkg string) error {
 		return err
 	}
 	file := filepath.Join(g.snippetsOutDir(), fmt.Sprintf("snippet_metadata.%s.json", protoPkg))
-	g.resp.File = append(g.resp.File, &plugin.CodeGeneratorResponse_File{
+	g.resp.File = append(g.resp.File, &pluginpb.CodeGeneratorResponse_File{
 		Name:    proto.String(file),
 		Content: proto.String(string(json[:])),
 	})

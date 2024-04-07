@@ -20,7 +20,6 @@ import (
 	"testing"
 
 	longrunning "cloud.google.com/go/longrunning/autogen/longrunningpb"
-	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
 	"github.com/google/go-cmp/cmp"
 	"github.com/googleapis/gapic-generator-go/internal/pbinfo"
 	"github.com/googleapis/gapic-generator-go/internal/txtdiff"
@@ -33,6 +32,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/known/emptypb"
+	"google.golang.org/protobuf/types/pluginpb"
 )
 
 // Note: the fields parameter contains the names of _all_ the request message's fields,
@@ -79,7 +79,7 @@ func setupMethod(g *generator, url, body string, fields []string) (*descriptorpb
 			MessageType: []*descriptorpb.DescriptorProto{msg},
 		},
 	}
-	req := plugin.CodeGeneratorRequest{
+	req := pluginpb.CodeGeneratorRequest{
 		Parameter: proto.String("go-gapic-package=path;mypackage,transport=rest"),
 		ProtoFile: fds,
 	}
@@ -363,7 +363,7 @@ func TestLeafFields(t *testing.T) {
 			wellKnownMsg,
 		},
 	}
-	req := plugin.CodeGeneratorRequest{
+	req := pluginpb.CodeGeneratorRequest{
 		Parameter: proto.String("go-gapic-package=path;mypackage,transport=rest"),
 		ProtoFile: []*descriptorpb.FileDescriptorProto{file},
 	}
