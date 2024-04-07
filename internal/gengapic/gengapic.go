@@ -58,6 +58,7 @@ func Gen(genReq *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse
 		return &g.resp, err
 	}
 
+	// TODO: why would there be more than 1 service on a given run of Gen?
 	genServs := g.collectServices(genReq)
 
 	if len(genServs) == 0 {
