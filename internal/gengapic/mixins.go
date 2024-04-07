@@ -207,9 +207,12 @@ func (g *generator) hasLocationMixin() bool {
 }
 
 // checkIAMPolicyOverrides determines if any of the given services define an
-// IAMPolicy RPC and sets the hasIAMpolicyOverrides generator flag if so. If set
-// to true, the IAMPolicy mixin will not be generated on any service client. This
-// is for backwards compatibility with existing IAMPolicy redefinitions.
+// [IAMPolicy RPC]. If so, the hasIAMpolicyOverrides generator flag is set and
+// the IAMPolicy mixin will not be generated on any service client.
+//
+// This is for backwards compatibility with existing IAMPolicy redefinitions.
+//
+// [IAMPolicy RPC]: https://github.com/googleapis/googleapis/blob/master/google/iam/v1/iam_policy.proto
 func (g *generator) checkIAMPolicyOverrides(servs []*descriptorpb.ServiceDescriptorProto) {
 	iam, hasMixin := g.mixins["google.iam.v1.IAMPolicy"]
 	if !hasMixin {

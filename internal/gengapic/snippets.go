@@ -67,11 +67,12 @@ func (g *generator) addSnippetsMetadataResult(m *descriptorpb.MethodDescriptorPr
 }
 
 // genAndCommitSnippets generates and commits a snippet file for each method in a client.
-// Does nothing and returns nil if opts.omitSnippets is true.
+// If opts.omitSnippets is true, snippets will not be returned and nil is returned.
 func (g *generator) genAndCommitSnippets(s *descriptorpb.ServiceDescriptorProto) error {
 	if g.opts.omitSnippets {
 		return nil
 	}
+
 	defaultHost := proto.GetExtension(s.Options, annotations.E_DefaultHost).(string)
 	g.snippetMetadata.AddService(s.GetName(), defaultHost)
 	methods := append(s.GetMethod(), g.getMixinMethods()...)

@@ -85,6 +85,7 @@ func Gen(genReq *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse
 		g.metadata.ProtoPackage = protoPkg
 	}
 	g.metadata.LibraryPackage = g.opts.pkgPath
+
 	// Initialize the model that will collect snippet metadata.
 	g.snippetMetadata = g.newSnippetsMetadata(protoPkg)
 
@@ -166,7 +167,8 @@ func Gen(genReq *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse
 	return &g.resp, nil
 }
 
-// Collects the proto services to generate GAPICs for from the CodeGeneratorRequest.
+// collectServices collects the set of API services from CodeGeneratorRequest,
+// to be generated into GAPIC client libraries.
 func (g *generator) collectServices(genReq *pluginpb.CodeGeneratorRequest) (genServs []*descriptorpb.ServiceDescriptorProto) {
 	for _, f := range genReq.GetProtoFile() {
 		if !strContains(genReq.GetFileToGenerate(), f.GetName()) {

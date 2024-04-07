@@ -36,47 +36,56 @@ import (
 	"google.golang.org/protobuf/types/pluginpb"
 )
 
+// generator provides functionality to generate a
+// pluginpb.CodeGeneratorResponse from a pluginpb.CodeGeneratorRequest.
 type generator struct {
 	pt printer.P
 
-	// Protobuf descriptor properties
+	// descInfo contains the protobuf descriptor properties.
 	descInfo pbinfo.Info
 
-	// Maps proto elements to their comments
+	// comments is a map of proto elements to their respective comments.
 	comments map[protoiface.MessageV1]string
 
 	resp pluginpb.CodeGeneratorResponse
 
-	// Comments to appear after the license header and before the package declaration.
+	// headerComments contains comments to be added after the license header
+	// and before the package name.
 	headerComments printer.P
 
 	imports map[pbinfo.ImportSpec]bool
 
-	// Human-readable name of the API used in docs
+	// apiName is a product title for the service, and is the name displayed in
+	// Google Cloud Console. The value is derived from
+	// https://pkg.go.dev/google.golang.org/genproto/googleapis/api/serviceconfig#Service.Title
+	// using
+	// https://pkg.go.dev/google.golang.org/genproto/googleapis/api/serviceconfig#Service.GetTitle.
 	apiName string
 
-	// Parsed service config from plugin option
+	// serviceConfig is the parsed service config from a plugin option.
 	serviceConfig *serviceconfig.Service
 
-	// gRPC ServiceConfig
+	// grpcConfig is the gRPC ServiceConfig.
 	grpcConf conf.Config
 
-	// Auxiliary types to be generated in the package
+	// aux is the set of auxiliary types to be generated in the package.
 	aux *auxTypes
 
-	// Options for the generator determining module names, transports,
-	// config file paths, etc.
+	// opts is the set of options for the generator, used to determine
+	// information such as the module name, transport, config file path, etc.
 	opts *options
 
-	// GapicMetadata for recording proto-to-code mappings in a
+	// metadata is the GapicMetadata used to record proto-to-code mappings in a
 	// gapic_metadata.json file.
 	metadata *metadata.GapicMetadata
 
-	// Model for capturing snippet details in a snippet_metadata.*.json file.
+	// snippetMetadata is the model used for capturing snippet details in a
+	// snippet_metadata.*.json file.
 	snippetMetadata *snippets.SnippetMetadata
 
 	mixins mixins
 
+	// hasIAMPolicy is true if the service defines an IAMPolicy RPC.
 	hasIAMPolicyOverrides bool
 
 	// customOpServices is a map of service descriptors with methods that create custom operations
