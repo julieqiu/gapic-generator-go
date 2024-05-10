@@ -21,10 +21,12 @@ import (
 	longrunning "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/googleapis/gapic-generator-go/internal/pbinfo"
+	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
 )
 
 func (g *generator) genExampleFile(serv *descriptor.ServiceDescriptorProto) error {
+
 	pkgName := g.opts.pkgName
 	servName := pbinfo.ReduceServName(serv.GetName(), pkgName)
 
@@ -97,14 +99,62 @@ func (g *generator) exampleMethod(pkgName, servName string, m *descriptor.Method
 }
 
 func (g *generator) exampleMethodBody(pkgName, servName string, m *descriptor.MethodDescriptorProto) error {
+	p := g.printf
 	if m.GetClientStreaming() != m.GetServerStreaming() {
 		// TODO(pongad): implement this correctly.
 		return nil
 	}
+	/*
+		m.ProtoReflect().Range(func(fd protoreflect.FieldDescriptor, v protoreflect.Value) bool {
+			how to get fielddescriptorproto from fielddescriptor golang		w := v.Message().Get(fd.Message().Fields().ByNumber(1))
+			fmt.Println(w) // prints "text"
+			return false
+		})
+		p := g.printf
 
-	p := g.printf
+		m.GetOptions()
+	*/
 
-	inType := g.descInfo.Type[m.GetInputType()]
+	// inType = library.google.apis.com/BookRequestMessage
+	mt := m.GetInputType()
+	inType := g.descInfo.Type[mt]
+
+	x := inType.(*descriptor.DescriptorProto)
+	fmt.Println(x)
+
+	y := x.Field[0]
+	z := proto.GetExtension(y.GetOptions(), annotations.E_ResourceReference)
+	a := z.(*annotations.ResourceReference)
+	fmt.Println(a.Type) // "library.googleapis.com/Book"
+
+	// 	inType2 := g.descInfo.Type[fmt.Sprintf(".google.cloud.%s", a.Type)]
+
+	inType2 := g.descInfo.Type[".google.cloud.library.v1.Book"]
+	b := inType2.(*descriptor.DescriptorProto)
+	c := proto.GetExtension(b.GetOptions(), annotations.E_Resource)
+	d := c.(*annotations.ResourceDescriptor)
+	fmt.Println(d.Type)
+
+	/*
+		inType.ProtoReflect().Range(func(fd protoreflect.FieldDescriptor, v protoreflect.Value) bool {
+			fmt.Println(fd)
+			fmt.Println(v)
+			// Have fd protoreflect.FieldDescriptor
+			// Want x descriptorpb.FieldDescriptorProto
+			z := v.Message().Get(fd)
+			fmt.Println(z)
+
+			x := proto.GetExtension(fd.Options(), annotations.E_ResourceReference)
+			y := proto.GetExtension(v.Message().Descriptor().Options(), annotations.E_ResourceReference)
+
+			fmt.Println(x)
+			fmt.Println(y)
+			return false
+		})
+	*/
+
+	// proto.GetExtension(x.Get(0).GetOptions(), annotations.E_ResourceReference)
+
 	if inType == nil {
 		return fmt.Errorf("cannot find type %q, malformed descriptor?", m.GetInputType())
 	}

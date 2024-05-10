@@ -27,6 +27,7 @@ import (
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/genproto/googleapis/api/serviceconfig"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/known/apipb"
 )
 
@@ -378,4 +379,111 @@ func commonTypes(g *generator) {
 	files := append(g.getMixinFiles(), emptyFile)
 
 	g.descInfo = pbinfo.Of(files)
+}
+
+func TestExampleMethodBody(t *testing.T) {
+	var g generator
+	g.imports = map[pbinfo.ImportSpec]bool{}
+	g.serviceConfig = &serviceconfig.Service{
+		Apis: []*apipb.Api{
+			{Name: "google.cloud.library.v1.BookService"},
+		},
+	}
+
+	protoPkg := "google.cloud.library.v1"
+	libPkg := "cloud.google.com/go/library/apiv1"
+	pkgName := "library"
+	g.snippetMetadata = snippets.NewMetadata(protoPkg, libPkg, pkgName)
+
+	name := "name"
+	field := &descriptorpb.FieldDescriptorProto{
+		Name:    &name,
+		Options: &descriptor.FieldOptions{},
+	}
+	resource := &annotations.ResourceReference{
+		Type: "library.googleapis.com/Book",
+	}
+	proto.SetExtension(field.GetOptions(), annotations.E_ResourceReference, resource)
+	//	x := proto.GetExtension(field.GetOptions(), annotations.E_ResourceReference)
+	inputType := &descriptor.DescriptorProto{
+		Name:  proto.String("GetBookRequest"),
+		Field: []*descriptorpb.FieldDescriptorProto{field},
+	}
+
+	name2 := "name"
+	field2 := &descriptorpb.FieldDescriptorProto{
+		Name: &name2,
+	}
+	resource2 := &annotations.ResourceDescriptor{
+		Type:    "library.googleapis.com/Book",
+		Pattern: []string{"books/{book}"},
+	}
+	outputType := &descriptor.DescriptorProto{
+		Name:    proto.String("Book"),
+		Field:   []*descriptorpb.FieldDescriptorProto{field2},
+		Options: &descriptor.MessageOptions{},
+	}
+	proto.SetExtension(outputType.GetOptions(), annotations.E_Resource, resource2)
+
+	file := &descriptor.FileDescriptorProto{
+		Options: &descriptor.FileOptions{
+			GoPackage: proto.String("cloud.google.com/go/library/apiv1/librarypb"),
+		},
+		Package: proto.String(protoPkg),
+	}
+
+	files := []*descriptor.FileDescriptorProto{}
+	g.descInfo = pbinfo.Of(files)
+	for _, typ := range []*descriptor.DescriptorProto{
+		inputType, outputType,
+	} {
+		g.descInfo.Type[".google.cloud.library.v1."+typ.GetName()] = typ
+		g.descInfo.ParentFile[typ] = file
+	}
+
+	serv := &descriptor.ServiceDescriptorProto{
+		Name: proto.String("LibraryService"),
+		Method: []*descriptor.MethodDescriptorProto{
+			{
+				Name:       proto.String("GetBookRequest"),
+				InputType:  proto.String(".google.cloud.library.v1.GetBookRequest"),
+				OutputType: proto.String(".google.cloud.library.v1.Book"),
+			},
+		},
+	}
+
+	for _, tst := range []struct {
+		tstName string
+		options options
+		imports map[pbinfo.ImportSpec]bool
+	}{
+		{
+			tstName: "snippet",
+			options: options{
+				pkgName:    "migration",
+				transports: []transport{grpc, rest},
+			},
+			imports: map[pbinfo.ImportSpec]bool{
+				{Path: "context"}: true,
+				{Name: "migrationpb", Path: "cloud.google.com/go/bigquery/migration/apiv2/migrationpb"}: true,
+			},
+		},
+	} {
+		t.Run(tst.tstName, func(t *testing.T) {
+			g.reset()
+			g.opts = &tst.options
+			defaultHost := "bigquerymigration.googleapis.com"
+			g.snippetMetadata.AddService(serv.GetName(), defaultHost)
+			err := g.genSnippetFile(serv, serv.Method[0])
+			if err != nil {
+				t.Fatal(err)
+			}
+			g.commit(filepath.Join("cloud.google.com/go", "internal", "generated", "snippets", "bigquery", "main.go"), "main")
+			if diff := cmp.Diff(g.imports, tst.imports); diff != "" {
+				t.Errorf("TestExample(%s): imports got(-),want(+):\n%s", tst.tstName, diff)
+			}
+			got := *g.resp.File[0].Content + *g.resp.File[1].Content
+			txtdiff.Diff(t, got, filepath.Join("testdata", tst.tstName+".want"))
+		})
+	}
 }
