@@ -15,6 +15,7 @@
 package gengapic
 
 import (
+	"fmt"
 	"path/filepath"
 	"testing"
 
@@ -27,6 +28,7 @@ import (
 	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/genproto/googleapis/api/serviceconfig"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/descriptorpb"
 	"google.golang.org/protobuf/types/known/apipb"
 )
 
@@ -378,4 +380,133 @@ func commonTypes(g *generator) {
 	files := append(g.getMixinFiles(), emptyFile)
 
 	g.descInfo = pbinfo.Of(files)
+}
+
+func TestExampleMethodBody(t *testing.T) {
+	/*
+		This is the RPC for which we are generating an example.
+
+		rpc GetBook (GetBookRequest) returns (Book) {
+		  option (google.api.http) = {
+		    get: "/v1/{name=books/*}"
+		  };
+		}
+
+		message GetBookRequest {
+		  string name = 1 [(google.api.resource_reference).type = "library.googleapis.com/Book"];
+		}
+
+		message Book {
+		  option (google.api.resource) = {
+		    type: "library.googleapis.com/Book"
+		    pattern: "books/{book}"
+		  };
+
+		  string name = 1;
+		}
+	*/
+	const (
+		protoPkg              = "google.cloud.library.v1"
+		libPkg                = "cloud.google.com/go/library/apiv1"
+		pkgName               = "library"
+		resourceReferenceType = "library.googleapis.com/Book"
+		goPkg                 = "cloud.google.com/go/library/apiv1/librarypb"
+	)
+
+	g := generator{
+		serviceConfig: &serviceconfig.Service{
+			Apis: []*apipb.Api{
+				{Name: fmt.Sprintf("%s.BookService", protoPkg)},
+			},
+		},
+		imports:         map[pbinfo.ImportSpec]bool{},
+		snippetMetadata: snippets.NewMetadata(protoPkg, libPkg, pkgName),
+		descInfo:        pbinfo.Of([]*descriptor.FileDescriptorProto{}),
+	}
+
+	file := &descriptor.FileDescriptorProto{
+		Options: &descriptor.FileOptions{
+			GoPackage: proto.String(goPkg),
+		},
+		Package: proto.String(protoPkg),
+	}
+
+	fieldName := "name"
+	field := &descriptorpb.FieldDescriptorProto{
+		Name:    &fieldName,
+		Options: &descriptor.FieldOptions{},
+	}
+	inputType := &descriptor.DescriptorProto{
+		Name:  proto.String("GetBookRequest"),
+		Field: []*descriptorpb.FieldDescriptorProto{field},
+	}
+
+	resource := &annotations.ResourceReference{
+		Type: resourceReferenceType,
+	}
+	proto.SetExtension(field.GetOptions(), annotations.E_ResourceReference, resource)
+
+	name2 := "name"
+	field2 := &descriptorpb.FieldDescriptorProto{
+		Name: &name2,
+	}
+	resource2 := &annotations.ResourceDescriptor{
+		Type:    "library.googleapis.com/Book",
+		Pattern: []string{"books/{book}"},
+	}
+	outputType := &descriptor.DescriptorProto{
+		Name:    proto.String("Book"),
+		Field:   []*descriptorpb.FieldDescriptorProto{field2},
+		Options: &descriptor.MessageOptions{},
+	}
+	proto.SetExtension(outputType.GetOptions(), annotations.E_Resource, resource2)
+
+	for _, typ := range []*descriptor.DescriptorProto{
+		inputType, outputType,
+	} {
+		g.descInfo.Type[".google.cloud.library.v1."+typ.GetName()] = typ
+		g.descInfo.ParentFile[typ] = file
+	}
+
+	for _, tst := range []struct {
+		tstName string
+		options options
+		imports map[pbinfo.ImportSpec]bool
+	}{
+		{
+			tstName: "snippet",
+			options: options{
+				pkgName:    "migration",
+				transports: []transport{grpc, rest},
+			},
+			imports: map[pbinfo.ImportSpec]bool{
+				{Path: "context"}: true,
+				{Name: "migrationpb", Path: "cloud.google.com/go/bigquery/migration/apiv2/migrationpb"}: true,
+			},
+		},
+	} {
+		t.Run(tst.tstName, func(t *testing.T) {
+			g.reset()
+			g.opts = &tst.options
+			serv := &descriptor.ServiceDescriptorProto{
+				Name: proto.String("LibraryService"),
+				Method: []*descriptor.MethodDescriptorProto{
+					{
+						Name:       proto.String("GetBookRequest"),
+						InputType:  proto.String(".google.cloud.library.v1.GetBookRequest"),
+						OutputType: proto.String(".google.cloud.library.v1.Book"),
+					},
+				},
+			}
+			err := g.genSnippetFile(serv, serv.Method[0])
+			if err != nil {
+				t.Fatal(err)
+			}
+			if diff := cmp.Diff(g.imports, tst.imports); diff != "" {
+				t.Errorf("TestExample(%s): imports got(-),want(+):\n%s", tst.tstName, diff)
+			}
+			got := *g.resp.File[0].Content + *g.resp.File[1].Content
+			txtdiff.Diff(t, got, filepath.Join("testdata", tst.tstName+".want"))
+		})
+	}
 }

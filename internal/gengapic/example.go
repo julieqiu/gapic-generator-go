@@ -21,10 +21,12 @@ import (
 	longrunning "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/googleapis/gapic-generator-go/internal/pbinfo"
+	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
 )
 
 func (g *generator) genExampleFile(serv *descriptor.ServiceDescriptorProto) error {
+
 	pkgName := g.opts.pkgName
 	servName := pbinfo.ReduceServName(serv.GetName(), pkgName)
 
@@ -97,14 +99,33 @@ func (g *generator) exampleMethod(pkgName, servName string, m *descriptor.Method
 }
 
 func (g *generator) exampleMethodBody(pkgName, servName string, m *descriptor.MethodDescriptorProto) error {
+	p := g.printf
 	if m.GetClientStreaming() != m.GetServerStreaming() {
 		// TODO(pongad): implement this correctly.
 		return nil
 	}
 
-	p := g.printf
-
 	inType := g.descInfo.Type[m.GetInputType()]
+
+	getBookRequest := inType.(*descriptor.DescriptorProto)
+
+	for _, field := range getBookRequest.Field {
+		rrExt := proto.GetExtension(field.GetOptions(), annotations.E_ResourceReference)
+		a := rrExt.(*annotations.ResourceReference)
+
+		fmt.Println(a.Type) // "library.googleapis.com/Book"
+	}
+
+	// 	inType2 := g.descInfo.Type[fmt.Sprintf(".google.cloud.%s", a.Type)]
+
+	inType2 := g.descInfo.Type[".google.cloud.library.v1.Book"]
+	b := inType2.(*descriptor.DescriptorProto)
+	c := proto.GetExtension(b.GetOptions(), annotations.E_Resource)
+	d := c.(*annotations.ResourceDescriptor)
+	fmt.Println(d.Type)
+
+	// proto.GetExtension(x.Get(0).GetOptions(), annotations.E_ResourceReference)
+
 	if inType == nil {
 		return fmt.Errorf("cannot find type %q, malformed descriptor?", m.GetInputType())
 	}
