@@ -75,8 +75,24 @@ const (
 	//
 	// Example:
 	// https://pkg.go.dev/cloud.google.com/go/bigquery/migration/apiv2/migrationpb#MigrationWorkflow
-	// https://github.com/googleapis/googleapis/blob/master/google/cloud/bigquery/migration/v2alpha/migration_entities.proto#L38
+	// https://github.com/googleapis/googleapis/blob/f7df662a24c56ecaab79cb7d808fed4d2bb4981d/google/cloud/bigquery/migration/v2/migration_entities.proto#L36
 	Resource = "MigrationWorkflow"
+
+	// ResourceType is the type of the `google.api.resource` option.
+	//
+	// Example:
+	// https://github.com/googleapis/googleapis/blob/f7df662a24c56ecaab79cb7d808fed4d2bb4981d/google/cloud/bigquery/migration/v2/migration_entities.proto#L38
+	//
+	// It is also the value of the resource reference type in the GetRequest
+	// for `google.api.resource_reference`.
+	// https://github.com/googleapis/googleapis/blob/f7df662a24c56ecaab79cb7d808fed4d2bb4981d/google/cloud/bigquery/migration/v2/migration_service.proto#L132
+	ResourceType = "bigquerymigration.googleapis.com/MigrationWorkflow"
+
+	// ResourcePattern is the pattern of the `google.api.resource` option.
+	//
+	// Example:
+	// https://github.com/googleapis/googleapis/blob/f7df662a24c56ecaab79cb7d808fed4d2bb4981d/google/cloud/bigquery/migration/v2/migration_entities.proto#L39
+	ResourcePattern = "projects/{project}/locations/{location}/workflows/{workflow}"
 )
 
 const (
