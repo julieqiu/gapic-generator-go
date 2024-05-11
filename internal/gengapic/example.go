@@ -20,6 +20,7 @@ import (
 
 	longrunning "cloud.google.com/go/longrunning/autogen/longrunningpb"
 	"github.com/googleapis/gapic-generator-go/internal/pbinfo"
+	"google.golang.org/genproto/googleapis/api/annotations"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
 )
@@ -96,35 +97,40 @@ func (g *generator) exampleMethod(pkgName, servName string, m *descriptorpb.Meth
 	return nil
 }
 
+// TODO(codyoss): This if can be removed once the public protos
+// have been migrated to their new package. This should be soon after this
+// code is merged.
+func temporarilyHardcodeInSpecPath(inSpec pbinfo.ImportSpec) pbinfo.ImportSpec {
+	if inSpec.Path == "google.golang.org/genproto/googleapis/longrunning" {
+		inSpec.Path = "cloud.google.com/go/longrunning/autogen/longrunningpb"
+	} else if inSpec.Path == "google.golang.org/genproto/googleapis/iam/v1" {
+		inSpec.Path = "cloud.google.com/go/iam/apiv1/iampb"
+	}
+	return inSpec
+}
+
 func (g *generator) exampleMethodBody(pkgName, servName string, m *descriptorpb.MethodDescriptorProto) error {
+	p := g.printf
+
 	if m.GetClientStreaming() != m.GetServerStreaming() {
 		// TODO(pongad): implement this correctly.
 		return nil
 	}
 
-	p := g.printf
-
+	// m.GetInputType() returns a string in the format
+	// `.google.cloud.<service>.<version>.<method>`.
 	inType := g.descInfo.Type[m.GetInputType()]
 	if inType == nil {
-		return fmt.Errorf("cannot find type %q, malformed descriptor?", m.GetInputType())
+		return fmt.Errorf("exampleMethodBody: cannot find type %q, malformed descriptor?", m.GetInputType())
 	}
 
 	inSpec, err := g.descInfo.ImportSpec(inType)
 	if err != nil {
 		return err
 	}
-	// TODO(codyoss): This if can be removed once the public protos
-	// have been migrated to their new package. This should be soon after this
-	// code is merged.
-	if inSpec.Path == "google.golang.org/genproto/googleapis/longrunning" {
-		inSpec.Path = "cloud.google.com/go/longrunning/autogen/longrunningpb"
-	} else if inSpec.Path == "google.golang.org/genproto/googleapis/iam/v1" {
-		inSpec.Path = "cloud.google.com/go/iam/apiv1/iampb"
-	}
-
-	httpInfo := getHTTPInfo(m)
-
+	inSpec = temporarilyHardcodeInSpecPath(inSpec)
 	g.imports[inSpec] = true
+
 	// Pick the first transport for simplicity. We don't need examples
 	// of each method for both transports when they have the same surface.
 	t := g.opts.transports[0]
@@ -134,14 +140,19 @@ func (g *generator) exampleMethodBody(pkgName, servName string, m *descriptorpb.
 	}
 	g.exampleInitClient(pkgName, s)
 
+	// name := "projects/{project-id}/books/{book}"
+	a := inType.(*descriptorpb.DescriptorProto)
+	requestName := g.constructRequestName(a)
 	if !m.GetClientStreaming() && !m.GetServerStreaming() {
 		p("")
 		p("req := &%s.%s{", inSpec.Name, inType.GetName())
 		p("  // TODO: Fill request struct fields.")
 		p("  // See https://pkg.go.dev/%s#%s.", inSpec.Path, inType.GetName())
+		p("  Name: %q", requestName)
 		p("}")
 	}
 
+	httpInfo := getHTTPInfo(m)
 	pf, _, err := g.getPagingFields(m)
 	if err != nil {
 		return err
@@ -159,8 +170,25 @@ func (g *generator) exampleMethodBody(pkgName, servName string, m *descriptorpb.
 	} else {
 		g.exampleUnaryCall(m)
 	}
-
 	return nil
+}
+
+func (g *generator) constructRequestName(method *descriptorpb.DescriptorProto) string {
+	a := getResourceReference(method)
+	parts := strings.Split(a, ".")
+	typName := fmt.Sprintf(".google.cloud.%s.v1.%s", parts[0], strings.Split(parts[2], "/")[1])
+	inType2 := g.descInfo.Type[typName]
+	b := inType2.(*descriptorpb.DescriptorProto)
+
+	// GetResource
+	r := proto.GetExtension(b.GetOptions(), annotations.E_Resource)
+	resource := r.(*annotations.ResourceDescriptor)
+	return fmt.Sprintf("projects/{project-id}/%s", resource.Pattern[0])
+}
+
+func getResourceReference(inType *descriptorpb.DescriptorProto) string {
+	r := proto.GetExtension(inType.Field[0].GetOptions(), annotations.E_ResourceReference)
+	return r.(*annotations.ResourceReference).Type
 }
 
 func (g *generator) exampleLROCall(m *descriptorpb.MethodDescriptorProto) {

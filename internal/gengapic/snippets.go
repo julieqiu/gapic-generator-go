@@ -100,7 +100,7 @@ func (g *generator) genAndCommitSnippets(s *descriptorpb.ServiceDescriptorProto)
 	return nil
 }
 
-// genSnippetFile generates a single RPC snippet by leveraging exampleMethodBody in gengapic/example.go.
+// genSnippetFile generates a RPC snippet for a given method body.
 func (g *generator) genSnippetFile(s *descriptorpb.ServiceDescriptorProto, m *descriptorpb.MethodDescriptorProto) error {
 	regionTag := g.snippetMetadata.RegionTag(s.GetName(), m.GetName())
 	g.headerComment(fmt.Sprintf("[START %s]", regionTag))
