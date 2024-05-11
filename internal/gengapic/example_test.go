@@ -282,7 +282,7 @@ func TestGenSnippetFile(t *testing.T) {
 	g.serviceConfig = sample.ServiceConfig()
 
 	serv := sample.Service()
-	g.snippetMetadata = snippets.NewMetadata(sample.ProtoPackagePath, sample.GoPackagePath, sample.GoPackageName)
+	g.snippetMetadata = snippets.NewMetadata(sample.ProtoPackage, sample.GoPackagePath, sample.GoPackageName)
 	g.snippetMetadata.AddService(serv.GetName(), sample.ServiceURL)
 
 	inputType := sample.InputType(sample.CreateRequest)
@@ -307,7 +307,7 @@ func TestGenSnippetFile(t *testing.T) {
 		{
 			name: "snippet",
 			options: options{
-				pkgName:    "migration",
+				pkgName:    sample.GoPackageName,
 				transports: []transport{grpc, rest},
 			},
 			imports: map[pbinfo.ImportSpec]bool{
@@ -323,7 +323,7 @@ func TestGenSnippetFile(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			g.commit(filepath.Join("cloud.google.com/go", "internal", "generated", "snippets", "bigquery", "main.go"), "main")
+			g.commit(filepath.Join("cloud.google.com/go", "internal", "generated", "snippets", sample.GoPackageName, "main.go"), "main")
 			if diff := cmp.Diff(test.imports, g.imports); diff != "" {
 				t.Errorf("TestExample(%s) imports mismatch: (-want +got):\n%s", test.name, diff)
 			}
