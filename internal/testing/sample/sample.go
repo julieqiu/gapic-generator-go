@@ -18,6 +18,11 @@ package sample
 
 import (
 	"fmt"
+
+	"google.golang.org/genproto/googleapis/api/serviceconfig"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/descriptorpb"
+	"google.golang.org/protobuf/types/known/apipb"
 )
 
 const (
@@ -138,4 +143,51 @@ const (
 // DescriptorInfoTypeName constructs the name format used by g.descInfo.Type.
 func DescriptorInfoTypeName(typ string) string {
 	return fmt.Sprintf(".%s.%s", ProtoPackagePath, typ)
+}
+
+func ServiceConfig() *serviceconfig.Service {
+	return &serviceconfig.Service{
+		Apis: []*apipb.Api{
+			{Name: ProtoServiceName},
+		},
+	}
+}
+
+func Service() *descriptorpb.ServiceDescriptorProto {
+	return &descriptorpb.ServiceDescriptorProto{
+		Name: proto.String(ServiceName),
+		Method: []*descriptorpb.MethodDescriptorProto{
+			{
+				Name:       proto.String(CreateMethod),
+				InputType:  proto.String(DescriptorInfoTypeName(CreateRequest)),
+				OutputType: proto.String(DescriptorInfoTypeName(Resource)),
+			},
+			{
+				Name:       proto.String(GetMethod),
+				InputType:  proto.String(DescriptorInfoTypeName(GetRequest)),
+				OutputType: proto.String(DescriptorInfoTypeName(Resource)),
+			},
+		},
+	}
+}
+
+func InputType(input string) *descriptorpb.DescriptorProto {
+	return &descriptorpb.DescriptorProto{
+		Name: proto.String(input),
+	}
+}
+
+func OutputType(output string) *descriptorpb.DescriptorProto {
+	return &descriptorpb.DescriptorProto{
+		Name: proto.String(output),
+	}
+}
+
+func File() *descriptorpb.FileDescriptorProto {
+	return &descriptorpb.FileDescriptorProto{
+		Options: &descriptorpb.FileOptions{
+			GoPackage: proto.String(GoProtoPackagePath),
+		},
+		Package: proto.String(ProtoPackagePath),
+	}
 }
