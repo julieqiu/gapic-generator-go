@@ -35,67 +35,63 @@ import (
 // example in
 // https://github.com/googleapis/gapic-generator-go/issues/1372#issuecomment-1633101248.
 func TestExampleMethodBody_Pattern(t *testing.T) {
-	const (
-		serviceName     = "LibraryService"
-		serviceEndpoint = "library.googleapis.com"
-
-		protoVersion     = "v1"
-		protoPackagePath = "google.cloud.library.v1"
-
-		goPackagePath      = "cloud.google.com/go/library/apiv1"
-		goPackageName      = "library"
-		goProtoPackagePath = "cloud.google.com/go/library/apiv1/librarypb"
-		goProtoPackageName = "librarypb"
-	)
 	g := generator{
 		serviceConfig: &serviceconfig.Service{
 			Apis: []*apipb.Api{
 				{
-					Name: fmt.Sprintf("%s.%s", protoPackagePath, sample.ServiceName),
+					Name: fmt.Sprintf("%s.%s", sample.ProtoPackage, sample.ProtoService),
 				},
 			},
 		},
 		imports: map[pbinfo.ImportSpec]bool{
 			{Path: "context"}: true,
-			{Name: goProtoPackageName, Path: goProtoPackagePath}: true,
+			{Name: sample.ProtoPackage, Path: sample.GoPackagePath}: true,
 		},
-		snippetMetadata: snippets.NewMetadata(protoPackagePath, goPackagePath, goPackageName),
+		snippetMetadata: snippets.NewMetadata(sample.ProtoPackage, sample.GoPackagePath, sample.GoPackageName),
 		descInfo:        pbinfo.Of([]*descriptorpb.FileDescriptorProto{}),
+		protoPackage:    sample.ProtoPackage,
 		opts: &options{
-			pkgName:    goPackageName,
+			pkgName:    sample.GoPackageName,
 			transports: []transport{grpc, rest},
 		},
 	}
-	g.snippetMetadata.AddService(sample.ServiceName, protoPackagePath)
+	g.snippetMetadata.AddService(sample.ProtoService, sample.ProtoPackage)
 
-	/*
-		service LibraryService {
-			rpc GetBook (GetBookRequest) returns (Book) {
-				option (google.api.http) = {
-					get: "/v1/{name=books/*}"
-				};
-			}
-		}
-	*/
-	serv := &descriptorpb.ServiceDescriptorProto{
-		Name: proto.String(sample.ServiceName),
-		Method: []*descriptorpb.MethodDescriptorProto{
-			{
-				Name:       proto.String("GetBookRequest"),
-				InputType:  proto.String(fmt.Sprintf(".%s.GetBookRequest", protoPackagePath)),
-				OutputType: proto.String(fmt.Sprintf(".%s.Book", protoPackagePath)),
+	serv := sample.Service()
+	inputType := createRequestInputWithResourceReferenceField()
+	inputType2 := sample.InputType(sample.GetRequest)
+	outputType := resourceOutputWithResourceField()
+
+	for _, typ := range []*descriptorpb.DescriptorProto{
+		inputType,
+		inputType2,
+		outputType,
+	} {
+		typName := sample.DescriptorInfoTypeName(typ.GetName())
+		g.descInfo.Type[typName] = typ
+		g.descInfo.ParentFile[typ] = &descriptorpb.FileDescriptorProto{
+			Options: &descriptorpb.FileOptions{
+				GoPackage: proto.String(sample.GoPackagePath),
 			},
-		},
+			Package: proto.String(sample.ProtoPackage),
+		}
 	}
 
-	/*
-		  message GetBookRequest {
-				string name = 1 [(google.api.resource_reference).type = "library.googleapis.com/Book"];
-		  }
-	*/
+	for _, m := range serv.Method {
+		if err := g.genSnippetFile(serv, m); err != nil {
+			t.Fatal(err)
+		}
+	}
+	g.commit(filepath.Join(sample.SnippetsDirectory, "main.go"), "main")
+	got := *g.resp.File[1].Content
+	fmt.Println(got)
+	txtdiff.Diff(t, got, filepath.Join("testdata", "snippet_Library.want"))
+}
+
+func createRequestInputWithResourceReferenceField() *descriptorpb.DescriptorProto {
 	name := "name"
 	inputType := &descriptorpb.DescriptorProto{
-		Name: proto.String("GetBookRequest"),
+		Name: proto.String(sample.CreateRequest),
 		Field: []*descriptorpb.FieldDescriptorProto{
 			{
 				Name:    &name,
@@ -107,22 +103,16 @@ func TestExampleMethodBody_Pattern(t *testing.T) {
 		inputType.Field[0].GetOptions(),
 		annotations.E_ResourceReference,
 		&annotations.ResourceReference{
-			Type: fmt.Sprintf("%s/Book", serviceEndpoint),
+			Type: sample.ResourceType,
 		},
 	)
+	return inputType
+}
 
-	/*
-		message Book {
-		  option (google.api.resource) = {
-		    type: "library.googleapis.com/Book"
-		    pattern: "books/{book}"
-		  };
-
-		  string name = 1;
-		}
-	*/
+func resourceOutputWithResourceField() *descriptorpb.DescriptorProto {
+	name := "name"
 	outputType := &descriptorpb.DescriptorProto{
-		Name: proto.String("Book"),
+		Name: proto.String(sample.Resource),
 		Field: []*descriptorpb.FieldDescriptorProto{
 			{
 				Name: &name,
@@ -134,30 +124,8 @@ func TestExampleMethodBody_Pattern(t *testing.T) {
 		outputType.GetOptions(),
 		annotations.E_Resource,
 		&annotations.ResourceDescriptor{
-			Type:    fmt.Sprintf("%s/Book", serviceEndpoint),
-			Pattern: []string{"books/{book}"},
+			Type:    sample.ResourceType,
+			Pattern: []string{"projects/*/secrets/*", "projects/*/locations/*/secrets/*"},
 		})
-
-	for _, typ := range []*descriptorpb.DescriptorProto{
-		inputType,
-		outputType,
-	} {
-		typName := fmt.Sprintf(".%s.%s", protoPackagePath, typ.GetName())
-		g.descInfo.Type[typName] = typ
-		g.descInfo.ParentFile[typ] = &descriptorpb.FileDescriptorProto{
-			Options: &descriptorpb.FileOptions{
-				GoPackage: proto.String(goProtoPackagePath),
-			},
-			Package: proto.String(protoPackagePath),
-		}
-	}
-
-	for _, m := range serv.Method {
-		if err := g.genSnippetFile(serv, m); err != nil {
-			t.Fatal(err)
-		}
-	}
-	g.commit(filepath.Join("cloud.google.com/go", "internal", "generated", "snippets", goPackageName, "main.go"), "main")
-	got := *g.resp.File[1].Content
-	txtdiff.Diff(t, got, filepath.Join("testdata", "snippet_Library.want"))
+	return outputType
 }

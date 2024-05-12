@@ -39,6 +39,12 @@ import (
 type generator struct {
 	pt printer.P
 
+	// protoPackage is the name of the proto package. For example,
+	// google.cloud.secretmanager.v1.
+	//
+	// The keys in descInfo are expected to be prefixed with this string.
+	protoPackage string
+
 	// Protobuf descriptor properties
 	descInfo pbinfo.Info
 

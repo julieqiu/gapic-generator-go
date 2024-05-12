@@ -102,6 +102,13 @@ const (
 	// https://github.com/googleapis/googleapis/blob/f7df662a24c56ecaab79cb7d808fed4d2bb4981d/google/cloud/secretmanager/v1/resources.proto#L40
 	Resource = "Secret"
 
+	// ResourceType is the value of the type field used in
+	// `google.api.resource_reference`.
+	//
+	// Example:
+	// https://github.com/googleapis/googleapis/blob/f7df662a24c56ecaab79cb7d808fed4d2bb4981d/google/cloud/secretmanager/v1/service.proto#L374
+	ResourceType = "secretmanager.googleapis.com/Secret"
+
 	// CreateMethodWithSettings is a fake method for the purpose of testing
 	// the method_settings functionality in the publishing YAML.
 	//

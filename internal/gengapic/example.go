@@ -141,14 +141,14 @@ func (g *generator) exampleMethodBody(pkgName, servName string, m *descriptorpb.
 	g.exampleInitClient(pkgName, s)
 
 	// name := "projects/{project-id}/books/{book}"
-	a := inType.(*descriptorpb.DescriptorProto)
-	requestName := g.constructRequestName(a)
+	method := inType.(*descriptorpb.DescriptorProto)
+	requestName := g.constructRequestName(method)
 	if !m.GetClientStreaming() && !m.GetServerStreaming() {
 		p("")
 		p("req := &%s.%s{", inSpec.Name, inType.GetName())
 		p("  // TODO: Fill request struct fields.")
 		p("  // See https://pkg.go.dev/%s#%s.", inSpec.Path, inType.GetName())
-		p("  Name: %q", requestName)
+		p("  Name: %v", requestName)
 		p("}")
 	}
 
@@ -173,17 +173,38 @@ func (g *generator) exampleMethodBody(pkgName, servName string, m *descriptorpb.
 	return nil
 }
 
-func (g *generator) constructRequestName(method *descriptorpb.DescriptorProto) string {
-	a := getResourceReference(method)
-	parts := strings.Split(a, ".")
-	typName := fmt.Sprintf(".google.cloud.%s.v1.%s", parts[0], strings.Split(parts[2], "/")[1])
-	inType2 := g.descInfo.Type[typName]
-	b := inType2.(*descriptorpb.DescriptorProto)
+func (g *generator) constructRequestName(method *descriptorpb.DescriptorProto) []string {
+	for k, v := range g.descInfo.Type {
+		parts := strings.Split(k, ".")
+		methodName := parts[len(parts)-1]
+		if methodName == method.GetName() {
+			v2 := v.(*descriptorpb.DescriptorProto)
+			for _, f := range v2.Field {
+				r := proto.GetExtension(f.GetOptions(), annotations.E_ResourceReference)
+				ref, ok := r.(*annotations.ResourceReference)
+				if !ok {
+					return nil
+				}
+				for k, v := range g.descInfo.Type {
+					parts := strings.Split(k, ".")
+					methodName := parts[len(parts)-1]
 
-	// GetResource
-	r := proto.GetExtension(b.GetOptions(), annotations.E_Resource)
-	resource := r.(*annotations.ResourceDescriptor)
-	return fmt.Sprintf("projects/{project-id}/%s", resource.Pattern[0])
+					parts = strings.Split(ref.Type, "/")
+					rt := parts[1]
+					if methodName == rt {
+						v2 := v.(*descriptorpb.DescriptorProto)
+						r := proto.GetExtension(v2.GetOptions(), annotations.E_Resource)
+						resource, ok := r.(*annotations.ResourceDescriptor)
+						if !ok {
+							return nil
+						}
+						return resource.Pattern
+					}
+				}
+			}
+		}
+	}
+	return nil
 }
 
 func getResourceReference(inType *descriptorpb.DescriptorProto) string {

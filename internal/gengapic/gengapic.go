@@ -71,6 +71,7 @@ func Gen(genReq *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse
 	}
 
 	protoPkg := g.descInfo.ParentFile[genServs[0]].GetPackage()
+	g.protoPackage = protoPkg
 
 	if op, ok := g.descInfo.Type[fmt.Sprintf(".%s.Operation", protoPkg)]; g.opts.diregapic && ok {
 		g.aux.customOp = &customOp{

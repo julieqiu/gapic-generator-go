@@ -5,18 +5,18 @@ func main() {
 	// - It may require correct/in-range values for request initialization.
 	// - It may require specifying regional endpoints when creating the service client as shown in:
 	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
-	c, err := library.NewClient(ctx)
+	c, err := secretmanager.NewClient(ctx)
 	if err != nil {
 		// TODO: Handle error.
 	}
 	defer c.Close()
 
-	req := &librarypb.GetBookRequest{
+	req := &apiv1pb.CreateSecretRequest{
 		// TODO: Fill request struct fields.
-		// See https://pkg.go.dev/cloud.google.com/go/library/apiv1/librarypb#GetBookRequest.
-		Name: "projects/{project-id}/books/{book}"
+		// See https://pkg.go.dev/cloud.google.com/go/secretmanager/apiv1#CreateSecretRequest.
+		Name: [projects/*/secrets/* projects/*/locations/*/secrets/*]
 	}
-	resp, err := c.GetBookRequest(ctx, req)
+	resp, err := c.CreateSecret(ctx, req)
 	if err != nil {
 		// TODO: Handle error.
 	}
@@ -24,4 +24,31 @@ func main() {
 	_ = resp
 }
 
-// [END google_v1_generated_LibraryService_GetBookRequest_sync]
+// [END google_v1_generated_SecretManagerService_CreateSecret_sync]
+func main() {
+	ctx := context.Background()
+	// This snippet has been automatically generated and should be regarded as a code template only.
+	// It will require modifications to work:
+	// - It may require correct/in-range values for request initialization.
+	// - It may require specifying regional endpoints when creating the service client as shown in:
+	//   https://pkg.go.dev/cloud.google.com/go#hdr-Client_Options
+	c, err := secretmanager.NewClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	defer c.Close()
+
+	req := &apiv1pb.GetSecretRequest{
+		// TODO: Fill request struct fields.
+		// See https://pkg.go.dev/cloud.google.com/go/secretmanager/apiv1#GetSecretRequest.
+		Name: []
+	}
+	resp, err := c.GetSecret(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
+// [END google_v1_generated_SecretManagerService_GetSecret_sync]
