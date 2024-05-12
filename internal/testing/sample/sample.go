@@ -116,8 +116,12 @@ const (
 	// https://github.com/googleapis/googleapis/blob/f7df662a24c56ecaab79cb7d808fed4d2bb4981d/google/cloud/secretmanager/v1/resources.proto#L17
 	ProtoPackage = "google.cloud.secretmanager.v1"
 
+	ProtoGoPackage = "cloud.google.com/go/secretmanager/apiv1/secretmanagerpb;secretmanagerpb"
+
 	// ProtoVersion is the major version as defined in the protofile.
 	ProtoVersion = "v1"
+
+	ProtoFilename = "google/cloud/secretmanager/v1/service.proto"
 )
 
 const (
@@ -179,11 +183,13 @@ func Service() *descriptorpb.ServiceDescriptorProto {
 				InputType:  proto.String(DescriptorInfoTypeName(CreateRequest)),
 				OutputType: proto.String(DescriptorInfoTypeName(Resource)),
 			},
-			{
-				Name:       proto.String(GetMethod),
-				InputType:  proto.String(DescriptorInfoTypeName(GetRequest)),
-				OutputType: proto.String(DescriptorInfoTypeName(Resource)),
-			},
+			/*
+				{
+					Name:       proto.String(GetMethod),
+					InputType:  proto.String(DescriptorInfoTypeName(GetRequest)),
+					OutputType: proto.String(DescriptorInfoTypeName(Resource)),
+				},
+			*/
 		},
 	}
 }
@@ -200,11 +206,71 @@ func OutputType(output string) *descriptorpb.DescriptorProto {
 	}
 }
 
+func typep(typ descriptorpb.FieldDescriptorProto_Type) *descriptorpb.FieldDescriptorProto_Type {
+	return &typ
+}
+
 func File() *descriptorpb.FileDescriptorProto {
 	return &descriptorpb.FileDescriptorProto{
-		Options: &descriptorpb.FileOptions{
-			GoPackage: proto.String(GoProtoPackagePath),
-		},
+		Name:    proto.String(ProtoFilename),
 		Package: proto.String(ProtoPackage),
+		Options: &descriptorpb.FileOptions{
+			GoPackage: proto.String(ProtoGoPackage),
+		},
+		Service: []*descriptorpb.ServiceDescriptorProto{
+			{
+				Name: proto.String(ProtoService),
+				Method: []*descriptorpb.MethodDescriptorProto{
+					{
+						Name:       proto.String(CreateMethod),
+						InputType:  proto.String(DescriptorInfoTypeName(CreateRequest)),
+						OutputType: proto.String(DescriptorInfoTypeName(Resource)),
+					},
+				},
+			},
+		},
+		MessageType: []*descriptorpb.DescriptorProto{
+			{
+				Name: proto.String(CreateRequest),
+				Field: []*descriptorpb.FieldDescriptorProto{
+					{
+						Name:   proto.String("parent"),
+						Number: proto.Int32(int32(1)),
+						Type:   typep(descriptorpb.FieldDescriptorProto_TYPE_STRING),
+					},
+					{
+						Name:   proto.String("secret_id"),
+						Number: proto.Int32(int32(2)),
+						Type:   typep(descriptorpb.FieldDescriptorProto_TYPE_STRING),
+					},
+					{
+						Name:     proto.String("secret"),
+						Number:   proto.Int32(int32(3)),
+						Type:     typep(descriptorpb.FieldDescriptorProto_TYPE_MESSAGE),
+						TypeName: proto.String(Resource),
+					},
+				},
+			},
+			{
+				Name: proto.String(CreateRequest),
+				Field: []*descriptorpb.FieldDescriptorProto{
+					{
+						Name:   proto.String("parent"),
+						Number: proto.Int32(int32(1)),
+						Type:   typep(descriptorpb.FieldDescriptorProto_TYPE_STRING),
+					},
+					{
+						Name:   proto.String("secret_id"),
+						Number: proto.Int32(int32(2)),
+						Type:   typep(descriptorpb.FieldDescriptorProto_TYPE_STRING),
+					},
+					{
+						Name:   proto.String("secret"),
+						Number: proto.Int32(int32(3)),
+						Type:   typep(descriptorpb.FieldDescriptorProto_TYPE_MESSAGE),
+					},
+				},
+			},
+		},
 	}
 }
