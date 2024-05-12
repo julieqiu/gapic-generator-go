@@ -39,6 +39,8 @@ import (
 type generator struct {
 	pt printer.P
 
+	fileSet []*descriptorpb.FileDescriptorProto
+
 	// Protobuf descriptor properties
 	descInfo pbinfo.Info
 
@@ -106,6 +108,7 @@ func (g *generator) init(req *pluginpb.CodeGeneratorRequest) error {
 	if err != nil {
 		return err
 	}
+
 	files := req.GetProtoFile()
 	files = append(files, wellKnownTypeFiles...)
 

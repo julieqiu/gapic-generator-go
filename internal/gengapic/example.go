@@ -139,6 +139,39 @@ func (g *generator) exampleMethodBody(pkgName, servName string, m *descriptorpb.
 		p("req := &%s.%s{", inSpec.Name, inType.GetName())
 		p("  // TODO: Fill request struct fields.")
 		p("  // See https://pkg.go.dev/%s#%s.", inSpec.Path, inType.GetName())
+
+		t := inType.(*descriptorpb.DescriptorProto)
+		for _, f := range t.Field {
+			if f.TypeName == nil {
+				// parts := strings.Split(inSpec, ".")
+				// name := parts[len(parts)-1]
+				// p(`  %s: ""`, inSpec)
+				continue
+			}
+
+			// The field is a message.
+			msg := g.descInfo.Type[*f.TypeName]
+			if msg == nil {
+				continue
+			}
+			msg2 := msg.(*descriptorpb.DescriptorProto)
+			for _, f2 := range msg2.Field {
+				parts := strings.Split(*f2.Name, ".")
+				name := parts[len(parts)-1]
+
+				// This is recursive.
+				if f2.TypeName == nil {
+					p(`  %s: "&secretmanagerpb.%s{}"`, name, *f2.Name)
+				}
+
+				// The field is a message.
+				fmt.Println(name)
+				if f2.TypeName != nil {
+					fmt.Println(*f2.TypeName)
+				}
+			}
+		}
+
 		p("}")
 	}
 

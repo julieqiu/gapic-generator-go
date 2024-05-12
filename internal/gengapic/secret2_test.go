@@ -51,7 +51,7 @@ func TestGenSecret(t *testing.T) {
 			continue
 		}
 		if *f.Name == "cloud.google.com/go/internal/generated/snippets/secretmanager/apiv1/secretmanagerpb/SecretManagerClient/CreateSecret/main.go" {
-			fmt.Println(*f.Content)
+			//			fmt.Println(*f.Content)
 			/*
 				for _, a := range f.GeneratedCodeInfo.Annotation {
 					fmt.Println(a.Path)

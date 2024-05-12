@@ -70,8 +70,8 @@ func Gen(genReq *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse
 		g.apiName = g.serviceConfig.GetTitle()
 	}
 
+	g.fileSet = genReq.ProtoFile
 	protoPkg := g.descInfo.ParentFile[genServs[0]].GetPackage()
-
 	if op, ok := g.descInfo.Type[fmt.Sprintf(".%s.Operation", protoPkg)]; g.opts.diregapic && ok {
 		g.aux.customOp = &customOp{
 			message:       op.(*descriptorpb.DescriptorProto),
