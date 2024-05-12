@@ -19,10 +19,8 @@ package sample
 import (
 	"fmt"
 
-	"google.golang.org/genproto/googleapis/api/serviceconfig"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/descriptorpb"
-	"google.golang.org/protobuf/types/known/apipb"
 )
 
 const (
@@ -44,13 +42,6 @@ const (
 	// Example:
 	// https://github.com/googleapis/googleapis/blob/f7df662a24c56ecaab79cb7d808fed4d2bb4981d/google/cloud/secretmanager/v1/secretmanager_v1.yaml#L4
 	ServiceTitle = "Secret Manager API"
-
-	// ServiceDocumentationSummary is the description of the service provided in the
-	// service YAML file.
-	//
-	// Example:
-	// https://github.com/googleapis/googleapis/blob/f7df662a24c56ecaab79cb7d808fed4d2bb4981d/google/cloud/secretmanager/v1/secretmanager_v1.yaml#L11
-	ServiceDocumentationSummary = "Stores sensitive data such as API keys, passwords, and certificates. Provides convenience while improving security."
 
 	// ServiceOAuthScope is the OAuth 2.0 scope(s) that is needed to request
 	// access to the service's API, as defined in the service YAML file.
@@ -103,6 +94,13 @@ const (
 	// https://pkg.go.dev/cloud.google.com/go/secretmanager/apiv1/secretmanagerpb#Secret
 	// https://github.com/googleapis/googleapis/blob/f7df662a24c56ecaab79cb7d808fed4d2bb4981d/google/cloud/secretmanager/v1/resources.proto#L40
 	Resource = "Secret"
+
+	// CreateMethodWithSettings is a fake method for the purpose of testing
+	// the method_settings functionality in the publishing YAML.
+	//
+	// The actual secretmanager publishing does not use this field:
+	// https://github.com/googleapis/googleapis/blob/f7df662a24c56ecaab79cb7d808fed4d2bb4981d/google/cloud/secretmanager/v1/secretmanager_v1.yaml#L44
+	CreateMethodWithSettings = "CreateSecretWithMethodSettings"
 )
 
 const (
@@ -170,19 +168,6 @@ const (
 // DescriptorInfoTypeName constructs the name format used by g.descInfo.Type.
 func DescriptorInfoTypeName(typ string) string {
 	return fmt.Sprintf(".%s.%s", ProtoPackage, typ)
-}
-
-func ServiceConfig() *serviceconfig.Service {
-	return &serviceconfig.Service{
-		Apis: []*apipb.Api{
-			{
-				Name: fmt.Sprintf("%s.%s", ProtoPackage, ProtoService),
-			},
-		},
-		Documentation: &serviceconfig.Documentation{
-			Summary: ServiceDocumentationSummary,
-		},
-	}
 }
 
 func Service() *descriptorpb.ServiceDescriptorProto {
