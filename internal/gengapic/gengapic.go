@@ -58,20 +58,7 @@ func Gen(genReq *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse
 		return &g.resp, err
 	}
 
-	genServs := g.collectServices(genReq)
-
-	if len(genServs) == 0 {
-		return &g.resp, nil
-	}
-
-	g.checkIAMPolicyOverrides(genServs)
-
-	if g.serviceConfig != nil {
-		g.apiName = g.serviceConfig.GetTitle()
-	}
-
 	protoPkg := g.descInfo.ParentFile[genServs[0]].GetPackage()
-
 	if op, ok := g.descInfo.Type[fmt.Sprintf(".%s.Operation", protoPkg)]; g.opts.diregapic && ok {
 		g.aux.customOp = &customOp{
 			message:       op.(*descriptorpb.DescriptorProto),

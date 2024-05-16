@@ -179,6 +179,14 @@ func newGenerator(req *pluginpb.CodeGeneratorRequest) (*generator, error) {
 		}
 	}
 
+	if g.serviceConfig != nil {
+		g.apiName = g.serviceConfig.GetTitle()
+	}
+	genServs := g.collectServices(genReq)
+	if len(genServs) == 0 {
+		return g, nil
+	}
+	g.checkIAMPolicyOverrides(genServs)
 	return g, nil
 }
 
