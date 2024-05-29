@@ -59,13 +59,11 @@ func Gen(genReq *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse
 	}
 
 	genServs := g.collectServices(genReq)
-
 	if len(genServs) == 0 {
 		return &g.resp, nil
 	}
-
-	g.checkIAMPolicyOverrides(genServs)
-
+	if g.containsIAMPolicyOverrides(genServs) {
+		g.hasIAMPolicyOverrides = true
 	}
 
 	protoPkg := g.descInfo.ParentFile[genServs[0]].GetPackage()
