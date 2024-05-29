@@ -55,13 +55,12 @@ var headerParamRegexp = regexp.MustCompile(`{([_.a-z0-9]+)`)
 func Gen(genReq *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse, error) {
 	g, err := newGenerator(genReq)
 	if err != nil {
-		return &g.resp, err
+		return nil, err
 	}
 
 	genServs := g.collectServices(genReq)
-
 	if len(genServs) == 0 {
-		return &g.resp, nil
+		return nil, nil
 	}
 
 	g.checkIAMPolicyOverrides(genServs)
@@ -98,7 +97,7 @@ func Gen(genReq *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse
 		outFile = filepath.Join(g.opts.outDir, outFile)
 
 		if err := g.genAndCommitSnippets(s); err != nil {
-			return &g.resp, fmt.Errorf("error generating snippets for %s: %v ", s.GetName(), err)
+			return nil, fmt.Errorf("error generating snippets for %s: %v ", s.GetName(), err)
 		}
 
 		g.reset()
@@ -110,13 +109,13 @@ func Gen(genReq *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse
 			g.opts.transports = []transport{grpc}
 		}
 		if err := g.gen(s); err != nil {
-			return &g.resp, err
+			return nil, err
 		}
 		g.commit(outFile+"_client.go", g.opts.pkgName)
 
 		g.reset()
 		if err := g.genExampleFile(s); err != nil {
-			return &g.resp, fmt.Errorf("error generating example for %q; %v", s.GetName(), err)
+			return nil, fmt.Errorf("error generating example for %q; %v", s.GetName(), err)
 		}
 		g.imports[pbinfo.ImportSpec{Name: g.opts.pkgName, Path: g.opts.pkgPath}] = true
 		g.commit(outFile+"_client_example_test.go", g.opts.pkgName+"_test")
@@ -128,7 +127,7 @@ func Gen(genReq *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse
 		}
 	}
 	if err := g.genAndCommitSnippetMetadata(protoPkg); err != nil {
-		return &g.resp, err
+		return nil, err
 	}
 	g.reset()
 	scopes := collectScopes(genServs)
@@ -152,14 +151,14 @@ func Gen(genReq *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse
 	if g.aux.customOp != nil {
 		g.reset()
 		if err := g.customOperationType(); err != nil {
-			return &g.resp, err
+			return nil, err
 		}
 		g.commit(filepath.Join(g.opts.outDir, "operations.go"), g.opts.pkgName)
 	}
 
 	g.reset()
 	if err := g.genAuxFile(); err != nil {
-		return &g.resp, err
+		return nil, err
 	}
 
 	return &g.resp, nil

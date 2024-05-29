@@ -107,6 +107,9 @@ func newGenerator(req *pluginpb.CodeGeneratorRequest) (*generator, error) {
 			methodToWrapper: map[*descriptorpb.MethodDescriptorProto]operationWrapper{},
 			opWrappers:      map[string]operationWrapper{},
 		},
+		resp: pluginpb.CodeGeneratorResponse{
+			SupportedFeatures: proto.Uint64(uint64(pluginpb.CodeGeneratorResponse_FEATURE_PROTO3_OPTIONAL)),
+		},
 	}
 
 	opts, err := parseOptions(req.Parameter)
