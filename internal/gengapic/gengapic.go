@@ -66,8 +66,6 @@ func Gen(genReq *pluginpb.CodeGeneratorRequest) (*pluginpb.CodeGeneratorResponse
 
 	g.checkIAMPolicyOverrides(genServs)
 
-	if g.serviceConfig != nil {
-		g.apiName = g.serviceConfig.GetTitle()
 	}
 
 	protoPkg := g.descInfo.ParentFile[genServs[0]].GetPackage()

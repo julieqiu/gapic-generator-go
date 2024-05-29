@@ -184,7 +184,9 @@ func newGenerator(req *pluginpb.CodeGeneratorRequest) (*generator, error) {
 			}
 		}
 	}
-
+	if g.serviceConfig != nil {
+		g.apiName = g.serviceConfig.GetTitle()
+	}
 	return g, nil
 }
 
